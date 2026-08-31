@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import com.ihrapanel.backend.common.exception.ForbiddenException;
 import java.util.HashMap;
 import java.util.Map;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -87,6 +89,15 @@ public ResponseEntity<ErrorResponse> handleForbidden(
                 .status(HttpStatus.BAD_REQUEST)
                 .body(errors);
     }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+public ResponseEntity<ErrorResponse> handleTypeMismatch(
+        MethodArgumentTypeMismatchException ex
+) {
+    return ResponseEntity
+            .status(HttpStatus.BAD_REQUEST)
+            .body(new ErrorResponse("Geçersiz parametre formatı."));
+}
 
     // Beklenmeyen bütün hatalar -> 500
     @ExceptionHandler(Exception.class)
