@@ -11,6 +11,7 @@ import com.ihrapanel.backend.user.dto.RegisterUserRequest;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.ihrapanel.backend.common.exception.ConflictException;
 
 @Service
 public class AuthService {
@@ -40,7 +41,7 @@ public class AuthService {
                 request.getEmail().trim().toLowerCase();
 
         if (userRepository.existsByEmail(normalizedEmail)) {
-            throw new IllegalArgumentException(
+            throw new ConflictException(
                     "Bu email ile kayıtlı bir kullanıcı zaten var."
             );
         }
@@ -51,7 +52,7 @@ public class AuthService {
                         request.getTaxNumber()
                 )) {
 
-            throw new IllegalArgumentException(
+            throw new ConflictException(
                     "Bu vergi numarasıyla kayıtlı bir şirket zaten var."
             );
         }

@@ -9,7 +9,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import com.ihrapanel.backend.user.dto.RegisterUserRequest;
-
+import com.ihrapanel.backend.common.exception.UnauthorizedException;
+import com.ihrapanel.backend.common.exception.ForbiddenException;
 import jakarta.validation.Valid;
 
 @RestController
@@ -41,7 +42,7 @@ public class AuthController {
 
 User user = userService.findByEmail(normalizedEmail)
            .orElseThrow(() ->
-                        new IllegalArgumentException("Email veya şifre hatalı.")
+                        new UnauthorizedException("Email veya şifre hatalı.")
                 );
 
         boolean passwordCorrect = passwordEncoder.matches(
@@ -53,11 +54,11 @@ User user = userService.findByEmail(normalizedEmail)
         //  eşleşiyorsa true döner, aksi takdirde false döner.
 
         if (!passwordCorrect) {
-            throw new IllegalArgumentException("Email veya şifre hatalı.");
+            throw new UnauthorizedException("Email veya şifre hatalı.");
         }
 
          if (!user.isActive()) {
-        throw new IllegalArgumentException("Kullanıcı hesabı pasif.");
+        throw new ForbiddenException("Kullanıcı hesabı pasif.");
     }
 
         String token = jwtService.generateToken(user);

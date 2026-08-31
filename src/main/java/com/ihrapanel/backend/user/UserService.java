@@ -7,6 +7,9 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import com.ihrapanel.backend.common.exception.ConflictException;
+import com.ihrapanel.backend.common.exception.ResourceNotFoundException;
+
 
 @Service
 public class UserService {
@@ -23,36 +26,7 @@ public class UserService {
         this.passwordEncoder = passwordEncoder;
     }
 
-    // Yeni kullanici kaydi. rawPassword = kullanicinin girdigi duz metin sifre -
-    // bunu ASLA oldugu gibi kaydetmiyoruz, once hash'liyoruz.
-    //patron oluşturulken eskimethos (patron warehouse ve muhabaseciyi olusturuken createEmployee kullanıcak)
-    public User registerUser(UUID companyId, String name, String email,
-                              String rawPassword, Role role) {
-        String normalizedEmail = email.trim().toLowerCase();
-
-        if (userRepository.existsByEmail(normalizedEmail)) {
-            throw new IllegalArgumentException(
-                    "Bu email ile kayitli bir kullanici zaten var."
-            );
-        }
-
-        Company company = companyRepository.findById(companyId)
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "Sirket bulunamadi."
-                ));
-
-        User user = new User();
-        user.setName(name);
-        user.setEmail(normalizedEmail); 
-        
-        // encode(): rawPassword'u BCrypt hash'ine cevirir. Ornegin
-        // "sifre123" -> "$2a$10$N9qo8uLOickgx2ZMRZoMy..." gibi bir sey olur.
-        user.setPasswordHash(passwordEncoder.encode(rawPassword));
-        user.setRole(role);
-        user.setCompany(company);
-
-        return userRepository.save(user);
-    }
+  
 
     public Optional<User> findByEmail(String email) {
       return userRepository.findByEmail(
@@ -78,7 +52,7 @@ public User createEmployee(
         Role role
 ) {
 
-    // OWNER bu endpoint üzerinden başka OWNER oluşturamaz.
+    // OWNER bu endpoint üzerinden başka OWNER oluşturamaz.-400
     if (role == Role.OWNER) {
         throw new IllegalArgumentException(
                 "Yeni OWNER bu endpoint üzerinden oluşturulamaz."
@@ -86,16 +60,16 @@ public User createEmployee(
     }
 
     String normalizedEmail = email.trim().toLowerCase();
-
+//eğer email abskası tarafından kullanılıyorsa-409
     if (userRepository.existsByEmail(normalizedEmail)) {
-        throw new IllegalArgumentException(
+        throw new ConflictException(
                 "Bu email ile kayıtlı bir kullanıcı zaten var."
         );
     }
-
+//şirket yok 404
     Company company = companyRepository.findById(companyId)
             .orElseThrow(() ->
-                    new IllegalArgumentException("Şirket bulunamadı.")
+                    new ResourceNotFoundException("Şirket bulunamadı.")
             );
 
     User user = new User();
@@ -114,7 +88,7 @@ public User createEmployee(
 public User getUserById(UUID userId, UUID companyId) {
     return userRepository.findByIdAndCompanyId(userId, companyId)
             .orElseThrow(() ->
-                    new IllegalArgumentException("Kullanıcı bulunamadı.")
+                    new ResourceNotFoundException("Kullanıcı bulunamadı.")
             );
 }
 
@@ -129,7 +103,7 @@ public User updateUser(
     User user = userRepository
             .findByIdAndCompanyId(userId, companyId)
             .orElseThrow(() ->
-                    new IllegalArgumentException("Kullanıcı bulunamadı.")
+                    new ResourceNotFoundException("Kullanıcı bulunamadı.")
             );
 
     String normalizedEmail = email.trim().toLowerCase();
@@ -137,7 +111,7 @@ public User updateUser(
     if (!user.getEmail().equals(normalizedEmail)
             && userRepository.existsByEmail(normalizedEmail)) {
 
-        throw new IllegalArgumentException(
+        throw new ConflictException(
                 "Bu email ile kayıtlı bir kullanıcı zaten var."
         );
     }
@@ -157,7 +131,7 @@ public User changeUserActiveStatus(
     User user = userRepository
             .findByIdAndCompanyId(userId, companyId)
             .orElseThrow(() ->
-                    new IllegalArgumentException("Kullanıcı bulunamadı.")
+                    new ResourceNotFoundException("Kullanıcı bulunamadı.")
             );
 
     user.setActive(active);
