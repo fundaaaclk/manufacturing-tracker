@@ -10,6 +10,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import com.ihrapanel.backend.user.dto.RegisterUserRequest;
 
+import jakarta.validation.Valid;
+
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
@@ -30,11 +32,15 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(
-            @RequestBody LoginRequest request
+           @Valid @RequestBody LoginRequest request
     ) {
 
-        User user = userService.findByEmail(request.getEmail())
-                .orElseThrow(() ->
+        String normalizedEmail = request.getEmail()
+        .trim()
+        .toLowerCase();
+
+User user = userService.findByEmail(normalizedEmail)
+           .orElseThrow(() ->
                         new IllegalArgumentException("Email veya şifre hatalı.")
                 );
 
@@ -63,7 +69,7 @@ public class AuthController {
 
 @PostMapping("/register")
 public ResponseEntity<LoginResponse> register(
-      @RequestBody RegisterUserRequest request) 
+      @Valid @RequestBody RegisterUserRequest request) 
          {
 
         String token = authService.register(request);

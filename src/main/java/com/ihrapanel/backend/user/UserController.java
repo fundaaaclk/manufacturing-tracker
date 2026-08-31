@@ -10,6 +10,8 @@ import com.ihrapanel.backend.user.dto.CreateUserRequest;
 import com.ihrapanel.backend.user.dto.UpdateUserRequest;
 import java.util.UUID;
 import com.ihrapanel.backend.user.dto.UpdateUserStatusRequest;
+import jakarta.validation.Valid;
+// import com.ihrapanel.backend.common.GlobalExceptionHandler;
 
 @RestController
 @RequestMapping("/api/users")
@@ -33,6 +35,7 @@ public ResponseEntity<String> me(
             + "\nRole: " + currentUser.role()
     );
 }
+
 //Company_id ye görede userları döndürür sadece owner yapablir configsecurityde öyle verdik
 
 @GetMapping
@@ -63,7 +66,7 @@ public ResponseEntity<List<UserResponse>> getUsers(
 //Owner useri create ederken bu olucak
 @PostMapping
 public ResponseEntity<UserResponse> createUser(
-        @RequestBody CreateUserRequest request,
+        @Valid @RequestBody CreateUserRequest request,
         @AuthenticationPrincipal AuthenticatedUser currentUser
 ) {
 
@@ -114,7 +117,7 @@ public ResponseEntity<UserResponse> getUserById(
 @PutMapping("/{id}")
 public ResponseEntity<UserResponse> updateUser(
         @PathVariable UUID id,
-        @RequestBody UpdateUserRequest request,
+        @Valid @RequestBody UpdateUserRequest request,
         @AuthenticationPrincipal AuthenticatedUser currentUser
 ) {
     User user = userService.updateUser(
@@ -141,7 +144,7 @@ public ResponseEntity<UserResponse> updateUser(
 @PatchMapping("/{id}/active")
 public ResponseEntity<UserResponse> changeUserActiveStatus(
         @PathVariable UUID id,
-        @RequestBody UpdateUserStatusRequest request,
+        @Valid @RequestBody UpdateUserStatusRequest request,
         @AuthenticationPrincipal AuthenticatedUser currentUser
 ) {
     User user = userService.changeUserActiveStatus(
