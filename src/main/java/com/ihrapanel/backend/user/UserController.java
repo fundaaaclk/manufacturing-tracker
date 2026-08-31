@@ -7,6 +7,9 @@ import com.ihrapanel.backend.security.AuthenticatedUser;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import java.util.List;
 import com.ihrapanel.backend.user.dto.CreateUserRequest;
+import com.ihrapanel.backend.user.dto.UpdateUserRequest;
+import java.util.UUID;
+import com.ihrapanel.backend.user.dto.UpdateUserStatusRequest;
 
 @RestController
 @RequestMapping("/api/users")
@@ -49,7 +52,8 @@ public ResponseEntity<List<UserResponse>> getUsers(
                             user.getName(),
                             user.getEmail(),
                             user.getRole(),
-                            user.getCompany().getId()
+                            user.getCompany().getId(),
+                             user.isActive()
                     ))
                     .toList();
 
@@ -76,7 +80,83 @@ public ResponseEntity<UserResponse> createUser(
             user.getName(),
             user.getEmail(),
             user.getRole(),
-            user.getCompany().getId()
+            user.getCompany().getId(),
+             user.isActive()
+    );
+
+    return ResponseEntity.ok(response);
+}
+
+//User_id ile donmesinin endpointi(company id de dikkat ediyoruz )
+@GetMapping("/{id}")
+public ResponseEntity<UserResponse> getUserById(
+        @PathVariable UUID id,
+        @AuthenticationPrincipal AuthenticatedUser currentUser
+) {
+    User user = userService.getUserById(
+            id,
+            currentUser.companyId()
+    );
+
+    UserResponse response = new UserResponse(
+            user.getId(),
+            user.getName(),
+            user.getEmail(),
+            user.getRole(),
+            user.getCompany().getId(),
+             user.isActive()
+    );
+
+    return ResponseEntity.ok(response);
+}
+
+//update the  user information 
+@PutMapping("/{id}")
+public ResponseEntity<UserResponse> updateUser(
+        @PathVariable UUID id,
+        @RequestBody UpdateUserRequest request,
+        @AuthenticationPrincipal AuthenticatedUser currentUser
+) {
+    User user = userService.updateUser(
+            id,
+            currentUser.companyId(),
+            request.getName(),
+            request.getEmail()
+    );
+
+    UserResponse response = new UserResponse(
+            user.getId(),
+            user.getName(),
+            user.getEmail(),
+            user.getRole(),
+            user.getCompany().getId(),
+             user.isActive()
+    );
+
+    return ResponseEntity.ok(response);
+}
+ 
+//owner useri aktif/inaktif yapıyor
+
+@PatchMapping("/{id}/active")
+public ResponseEntity<UserResponse> changeUserActiveStatus(
+        @PathVariable UUID id,
+        @RequestBody UpdateUserStatusRequest request,
+        @AuthenticationPrincipal AuthenticatedUser currentUser
+) {
+    User user = userService.changeUserActiveStatus(
+            id,
+            currentUser.companyId(),
+            request.isActive()
+    );
+
+    UserResponse response = new UserResponse(
+            user.getId(),
+            user.getName(),
+            user.getEmail(),
+            user.getRole(),
+            user.getCompany().getId(),
+             user.isActive()
     );
 
     return ResponseEntity.ok(response);

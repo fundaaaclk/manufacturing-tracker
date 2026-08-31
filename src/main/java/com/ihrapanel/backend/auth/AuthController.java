@@ -50,6 +50,10 @@ public class AuthController {
             throw new IllegalArgumentException("Email veya şifre hatalı.");
         }
 
+         if (!user.isActive()) {
+        throw new IllegalArgumentException("Kullanıcı hesabı pasif.");
+    }
+
         String token = jwtService.generateToken(user);
 
         return ResponseEntity.ok(

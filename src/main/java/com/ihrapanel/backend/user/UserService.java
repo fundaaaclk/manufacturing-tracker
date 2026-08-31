@@ -110,4 +110,59 @@ public User createEmployee(
     return userRepository.save(user);
 }
 
+//userid ile getirme ayrıcıa companyid de var 
+public User getUserById(UUID userId, UUID companyId) {
+    return userRepository.findByIdAndCompanyId(userId, companyId)
+            .orElseThrow(() ->
+                    new IllegalArgumentException("Kullanıcı bulunamadı.")
+            );
+}
+
+
+//update the users information(email and name)
+public User updateUser(
+        UUID userId,
+        UUID companyId,
+        String name,
+        String email
+) {
+    User user = userRepository
+            .findByIdAndCompanyId(userId, companyId)
+            .orElseThrow(() ->
+                    new IllegalArgumentException("Kullanıcı bulunamadı.")
+            );
+
+    String normalizedEmail = email.trim().toLowerCase();
+
+    if (!user.getEmail().equals(normalizedEmail)
+            && userRepository.existsByEmail(normalizedEmail)) {
+
+        throw new IllegalArgumentException(
+                "Bu email ile kayıtlı bir kullanıcı zaten var."
+        );
+    }
+
+    user.setName(name);
+    user.setEmail(normalizedEmail);
+
+    return userRepository.save(user);
+}
+
+//userin aktif/aktif değil olayıı yapıcaz
+public User changeUserActiveStatus(
+        UUID userId,
+        UUID companyId,
+        boolean active
+) {
+    User user = userRepository
+            .findByIdAndCompanyId(userId, companyId)
+            .orElseThrow(() ->
+                    new IllegalArgumentException("Kullanıcı bulunamadı.")
+            );
+
+    user.setActive(active);
+
+    return userRepository.save(user);
+}
+
 }

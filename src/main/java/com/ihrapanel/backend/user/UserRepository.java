@@ -11,4 +11,8 @@ public interface  UserRepository extends JpaRepository<User, UUID> {
    List<User> findByCompanyId(UUID companyId);// Belirli bir şirkete ait tüm kullanıcıları getirir.
     // Spring Data JPA, User.company.id alanını kullanarak sorguyu otomatik oluşturur.
     boolean existsByEmail(String email);  // Verilen email adresiyle kayıtlı bir kullanıcı olup olmadığını kontrol eder.
+  //userid ile listeleme
+    Optional<User> findByIdAndCompanyId(UUID id, UUID companyId);
+
+
 }

@@ -11,14 +11,15 @@ public class UserResponse {
     private String email;
     private Role role;
     private UUID companyId;
-
+     private boolean active;
     public UserResponse(UUID id, String name, String email,
-                        Role role, UUID companyId) {
+                        Role role, UUID companyId, boolean active) {
         this.id = id;
         this.name = name;
         this.email = email;
         this.role = role;
         this.companyId = companyId;
+        this.active = active;
     }
 
     public UUID getId() {
@@ -39,5 +40,9 @@ public class UserResponse {
 
     public UUID getCompanyId() {
         return companyId;
+    }
+
+      public boolean isActive() {
+        return active;
     }
 }

@@ -10,7 +10,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.http.HttpMethod;
+
 
 @Configuration
 public class SecurityConfig {
@@ -45,11 +45,26 @@ public class SecurityConfig {
                                 "/api/companies",
                                 "/api/auth/login"
                         ).permitAll()
-
+                  //kendi bilgileirmi getir
+                        .requestMatchers(HttpMethod.GET, "/api/users/me")
+                         .authenticated()
+                   //şirketimde ki bütün kullanıcıları listele
                         .requestMatchers(HttpMethod.GET, "/api/users")
                       .hasRole("OWNER")
+                      //owner can read the user by user_id and company id (list the one user)
+                      .requestMatchers(HttpMethod.GET, "/api/users/*")
+                        .hasRole("OWNER")
+                        //owner can create user 
                       .requestMatchers(HttpMethod.POST, "/api/users")
                     .hasRole("OWNER")
+               //update the user information only owner can do it
+                    .requestMatchers(HttpMethod.PUT, "/api/users/*")
+                 .hasRole("OWNER")
+             //owner kulllanıcıyı aktif inaktif ediyo
+              .requestMatchers(HttpMethod.PATCH, "/api/users/*/active")
+                 .hasRole("OWNER")
+
+
 
                         .anyRequest().authenticated()
                 )
