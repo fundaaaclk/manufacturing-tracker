@@ -61,7 +61,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             userUuid,
             companyUuid
     ).orElse(null);
-
+ //userin inaktif ise jwt işe yaramıcaz 
     if (user == null || !user.isActive()) {
         filterChain.doFilter(request, response);
         return;
