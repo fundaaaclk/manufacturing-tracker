@@ -6,7 +6,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import com.ihrapanel.backend.user.Role;
 import com.ihrapanel.backend.user.UserRepository;
-
+import com.ihrapanel.backend.tenant.TenantContext;
 
 import java.util.UUID;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -30,25 +30,27 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     @Override
-    protected void doFilterInternal(
-            HttpServletRequest request,
-            HttpServletResponse response,
-            FilterChain filterChain
-    ) throws ServletException, IOException {
+protected void doFilterInternal(
+        HttpServletRequest request,
+        HttpServletResponse response,
+        FilterChain filterChain
+) throws ServletException, IOException {
 
-        String authHeader = request.getHeader("Authorization");
+    String authHeader = request.getHeader("Authorization");
 
-        // Authorization header yoksa veya Bearer ile başlamıyorsa
-        // JWT kontrolü yapmadan devam ederiz.
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            filterChain.doFilter(request, response);
-            return;
-        }
+    // Authorization header yoksa veya Bearer ile başlamıyorsa
+    // JWT kontrolü yapmadan devam ederiz.
+    if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        filterChain.doFilter(request, response);
+        return;
+    }
 
-        // "Bearer " kısmını çıkarıp sadece tokenı alıyoruz.
-        String token = authHeader.substring(7);
+    String token = authHeader.substring(7);
 
-       if (jwtService.isTokenValid(token)) {
+    if (!jwtService.isTokenValid(token)) {
+        filterChain.doFilter(request, response);
+        return;
+    }
 
     String userId = jwtService.extractUserId(token);
     String companyId = jwtService.extractCompanyId(token);
@@ -61,7 +63,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             userUuid,
             companyUuid
     ).orElse(null);
- //userin inaktif ise jwt işe yaramıcaz 
+
+    // User yoksa veya inactive ise JWT ile authentication yapma.
     if (user == null || !user.isActive()) {
         filterChain.doFilter(request, response);
         return;
@@ -87,8 +90,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     SecurityContextHolder
             .getContext()
             .setAuthentication(authentication);
-}
 
+    // Authentication başarılıysa tenant bilgisini request boyunca taşıyoruz.
+    TenantContext.setCompanyId(companyUuid);
+
+    try {
         filterChain.doFilter(request, response);
+    } finally {
+        // Thread tekrar kullanılabileceği için tenant bilgisini mutlaka siliyoruz.
+        TenantContext.clear();
     }
+}
 }
