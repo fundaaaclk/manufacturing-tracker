@@ -7,7 +7,7 @@ public final class TenantContext {
     private static final ThreadLocal<UUID> CURRENT_COMPANY = new ThreadLocal<>();
 
     private TenantContext() {
-        // Utility class: instance oluşturulmasını engelliyoruz.
+        // Utility class: instance oluşturulmasını engelliyoruz. kural baska yerde  değiştirilmez
     }
 
     //. Bu bilinçli: tenant-owned bir işlem yanlışlıkla 
@@ -30,6 +30,7 @@ public final class TenantContext {
         return companyId;
     }
 
+    //Login yaparken veya tenant bilgisi olmayan bir işlemde kullanmak için
     public static UUID getCompanyIdOrNull() {
         return CURRENT_COMPANY.get();
     }

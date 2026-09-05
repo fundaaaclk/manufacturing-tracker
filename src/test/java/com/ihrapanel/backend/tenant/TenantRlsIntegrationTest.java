@@ -27,12 +27,15 @@ class TenantRlsIntegrationTest {
     @Autowired
     private TenantRlsTestService tenantRlsTestService;
 
+   @Autowired
+    private TenantDatabaseContext tenantDatabaseContext;
+
     @Autowired
     private EntityManager entityManager;
 
     @Autowired
     private TransactionTemplate transactionTemplate;
-
+  
     @BeforeEach
     void setup() {
 
@@ -145,6 +148,7 @@ class TenantRlsIntegrationTest {
          * Test verisini sonra temizlemek için ayrı transaction.
          */
         transactionTemplate.executeWithoutResult(status -> {
+            tenantDatabaseContext.applyCurrentTenant();
             entityManager.createNativeQuery(
                     "DELETE FROM tenant_rls_test WHERE id = :id"
             )
