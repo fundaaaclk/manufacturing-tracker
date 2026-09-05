@@ -64,11 +64,14 @@ protected void doFilterInternal(
             companyUuid
     ).orElse(null);
 
-    // User yoksa veya inactive ise JWT ile authentication yapma.
-    if (user == null || !user.isActive()) {
-        filterChain.doFilter(request, response);
-        return;
-    }
+    // User yoksa veya inactive ise(Companynın aktifliğede bakılır) JWT ile authentication yapma.
+  if (user == null
+        || !user.isActive()
+        || !user.getCompany().isActive()) {
+
+    filterChain.doFilter(request, response);
+    return;
+}
 
     AuthenticatedUser principal =
             new AuthenticatedUser(

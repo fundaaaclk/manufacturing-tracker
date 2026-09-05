@@ -42,7 +42,7 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/hello",
                                 "/api/auth/register",
-                                "/api/companies",
+                               // "/api/companies",
                                 "/api/auth/login"
                         ).permitAll()
                   //kendi bilgileirmi getir

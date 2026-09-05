@@ -185,4 +185,96 @@ void applicationShouldUseRuntimeDatabaseRole() {
         assertEquals("ihrapanel_app", sessionUser.toString());
     });
 }
+
+@Test
+void companyAShouldNotUpdateCompanyBData() {
+
+    TenantContext.setCompanyId(COMPANY_A);
+
+    int updatedRows = tenantRlsTestService.updateName(
+            UUID.fromString("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
+            "HACKED BY COMPANY A"
+    );
+
+    assertEquals(0, updatedRows);
+}
+
+
+@Test
+void companyAShouldNotDeleteCompanyBData() {
+
+    TenantContext.setCompanyId(COMPANY_A);
+
+    int deletedRows = tenantRlsTestService.deleteById(
+            UUID.fromString("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb")
+    );
+
+    assertEquals(0, deletedRows);
+}
+
+@Test
+void companyAShouldUpdateItsOwnData() {
+
+    TenantContext.setCompanyId(COMPANY_A);
+
+    int updatedRows = tenantRlsTestService.updateName(
+            UUID.fromString("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
+            "A kaydi updated"
+    );
+
+    assertEquals(1, updatedRows);
+
+    // Eski haline döndür
+    int restoredRows = tenantRlsTestService.updateName(
+            UUID.fromString("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
+            "A kaydi"
+    );
+
+    assertEquals(1, restoredRows);
+}
+
+
+@Test
+void companyAShouldDeleteItsOwnData() {
+
+    TenantContext.setCompanyId(COMPANY_A);
+
+    UUID id = UUID.randomUUID();
+
+    TenantRlsTestEntity temporaryRow =
+            new TenantRlsTestEntity(
+                    id,
+                    COMPANY_A,
+                    "Temporary delete test"
+            );
+
+    tenantRlsTestService.saveForCurrentTenant(temporaryRow);
+
+    int deletedRows =
+            tenantRlsTestService.deleteById(id);
+
+    assertEquals(1, deletedRows);
+
+    List<TenantRlsTestEntity> remaining =
+            tenantRlsTestService.findAllForCurrentTenant();
+
+    assertTrue(
+            remaining.stream()
+                    .noneMatch(row -> id.equals(row.getId()))
+    );
+}
+
+/* 
+@Test
+void companyAShouldNotAccessCompanyBRowByKnownId() {
+
+    TenantContext.setCompanyId(COMPANY_A);
+
+    TenantRlsTestEntity result =
+            tenantRlsTestService.findById(COMPANY_B_ROW);
+
+    assertNull(result);
+}*/
+
+
 }

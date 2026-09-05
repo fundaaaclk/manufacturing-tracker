@@ -4,6 +4,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class TenantRlsTestService {
@@ -36,6 +37,34 @@ public class TenantRlsTestService {
 
         return repository.saveAndFlush(entity);
     }
+   //CRUD işlemi testi 
+@Transactional
+public int updateName(UUID id, String newName) {
+
+    tenantDatabaseContext.applyCurrentTenant();
+
+    return repository.updateNameById(id, newName);
+}
+  //CRUD işlemi testi 
+@Transactional
+public int deleteById(UUID id) {
+
+    tenantDatabaseContext.applyCurrentTenant();
+
+    return repository.deleteDirectlyById(id);
+}
+
+@Transactional(readOnly = true)
+public TenantRlsTestEntity findById(UUID id) {
+
+    tenantDatabaseContext.applyCurrentTenant();
+
+    return repository.findById(id)
+            .orElse(null);
+}
+
+
+
 }
 
 
@@ -46,3 +75,6 @@ applyCurrentTenant()
 repository
       ↓
 PostgreSQL RLS */
+
+
+

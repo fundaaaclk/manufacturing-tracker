@@ -18,7 +18,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.Optional;
 import java.util.UUID;
-
+import com.ihrapanel.backend.company.Company;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -45,9 +45,12 @@ class JwtAuthenticationFilterTest {
 
         String token = "valid-token";
 
-        User user = mock(User.class);
+       User user = mock(User.class);
+Company company = mock(Company.class);
 
-        when(user.isActive()).thenReturn(true);
+when(user.isActive()).thenReturn(true);
+when(company.isActive()).thenReturn(true);
+when(user.getCompany()).thenReturn(company);
 
         when(jwtService.isTokenValid(token)).thenReturn(true);
         when(jwtService.extractUserId(token)).thenReturn(userId.toString());
@@ -142,4 +145,128 @@ class JwtAuthenticationFilterTest {
 
         verify(filterChain).doFilter(request, response);
     }
+
+    @Test
+void shouldClearTenantContextEvenWhenFilterChainThrowsException()
+        throws Exception {
+
+    UUID userId = UUID.randomUUID();
+    UUID companyId = UUID.randomUUID();
+
+    String token = "valid-token";
+
+   User user = mock(User.class);
+Company company = mock(Company.class);
+
+when(user.isActive()).thenReturn(true);
+when(company.isActive()).thenReturn(true);
+when(user.getCompany()).thenReturn(company);
+
+    when(jwtService.isTokenValid(token)).thenReturn(true);
+    when(jwtService.extractUserId(token)).thenReturn(userId.toString());
+    when(jwtService.extractCompanyId(token)).thenReturn(companyId.toString());
+    when(jwtService.extractRole(token)).thenReturn(Role.OWNER.name());
+
+    when(userRepository.findByIdAndCompanyId(userId, companyId))
+            .thenReturn(Optional.of(user));
+
+    MockHttpServletRequest request = new MockHttpServletRequest();
+    request.addHeader("Authorization", "Bearer " + token);
+
+    MockHttpServletResponse response =
+            new MockHttpServletResponse();
+
+    FilterChain filterChain = mock(FilterChain.class);
+
+    doAnswer(invocation -> {
+
+        // Request çalışırken tenant gerçekten set edilmiş mi?
+        assertTrue(TenantContext.isSet());
+        assertEquals(companyId, TenantContext.getCompanyId());
+
+        // Request sırasında beklenmeyen bir hata oluşsun.
+        throw new RuntimeException("Simulated request failure");
+
+    }).when(filterChain).doFilter(request, response);
+
+    assertThrows(
+            RuntimeException.class,
+            () -> filter.doFilter(request, response, filterChain)
+    );
+
+    // Hata fırlasa bile finally çalışıp tenant'ı temizlemeli.
+    assertFalse(TenantContext.isSet());
+    assertNull(TenantContext.getCompanyIdOrNull());
+
+    verify(filterChain).doFilter(request, response);
+}
+
+@Test
+void shouldNotSetTenantContextWhenCompanyIsInactive()
+        throws Exception {
+
+    UUID userId = UUID.randomUUID();
+    UUID companyId = UUID.randomUUID();
+
+    String token = "valid-token";
+
+    User user = mock(User.class);
+Company company = mock(Company.class);
+
+when(user.isActive()).thenReturn(true);
+when(company.isActive()).thenReturn(true);
+when(user.getCompany()).thenReturn(company);
+
+    // Ama bağlı olduğu company inactive
+   
+
+    when(company.isActive()).thenReturn(false);
+    when(user.getCompany()).thenReturn(company);
+
+    when(jwtService.isTokenValid(token)).thenReturn(true);
+    when(jwtService.extractUserId(token))
+            .thenReturn(userId.toString());
+    when(jwtService.extractCompanyId(token))
+            .thenReturn(companyId.toString());
+    when(jwtService.extractRole(token))
+            .thenReturn(Role.OWNER.name());
+
+    when(userRepository.findByIdAndCompanyId(userId, companyId))
+            .thenReturn(Optional.of(user));
+
+    MockHttpServletRequest request =
+            new MockHttpServletRequest();
+
+    request.addHeader(
+            "Authorization",
+            "Bearer " + token
+    );
+
+    MockHttpServletResponse response =
+            new MockHttpServletResponse();
+
+    FilterChain filterChain =
+            mock(FilterChain.class);
+
+    filter.doFilter(
+            request,
+            response,
+            filterChain
+    );
+
+    // Company inactive olduğu için authentication oluşmamalı.
+    assertNull(
+            SecurityContextHolder
+                    .getContext()
+                    .getAuthentication()
+    );
+
+    // TenantContext da set edilmemeli.
+    assertFalse(TenantContext.isSet());
+
+    // Request zinciri devam etmeli.
+    verify(filterChain)
+            .doFilter(request, response);
+}
+
 }
